@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bloons Defense Pro - 13 Towers</title>
+<style>
+  * { box-sizing: border-box; user-select: none; }
+  body {
+    margin: 0;
+    background: #14191f;
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  #wrapper {
+    position: relative;
+    width: 960px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+    border: 3px solid #2f3640;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #1e272e;
+  }
+  /* START MENU OVERLAY */
+  #menu-screen {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1e272e 0%, #0f1519 100%);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    text-align: center;
+  }
+  #menu-screen h1 {
+    font-size: 46px;
+    margin: 0 0 8px 0;
+    color: #fbc531;
+    text-shadow: 0 4px 12px rgba(251, 197, 49, 0.3);
+    letter-spacing: 1px;
+  }
+  #menu-screen p.subtitle {
+    color: #a4b0be;
+    margin: 0 0 28px 0;
+    font-size: 16px;
+  }
+  .menu-section {
+    margin-bottom: 24px;
+    width: 100%;
+    max-width: 720px;
+  }
+  .menu-section h3 {
+    margin: 0 0 10px 0;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #7f8fa6;
+  }
+  .option-grid {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+  }
+  .menu-card {
+    flex: 1;
+    background: #2f3640;
+    border: 2px solid #404b5a;
+    border-radius: 8px;
+    padding: 14px;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .menu-card:hover { border-color: #00a8ff; transform: translateY(-2px); }
+  .menu-card.active {
+    border-color: #fbc531;
+    background: #353b48;
+    box-shadow: 0 0 15px rgba(251, 197, 49, 0.25);
+  }
+  .menu-card strong { display: block; font-size: 17px; margin-bottom: 4px; color: #fff; }
+  .menu-card span { font-size: 12px; color: #a4b0be; }
+  #start-game-btn {
+    margin-top: 10px;
+    padding: 16px 48px;
+    font-size: 22px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    background: #44bd32;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #2b8a1e;
+    transition: 0.1s;
+  }
+  #start-game-btn:hover { background: #4cd137; }
+  #start-game-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 #2b8a1e; }
+
+  /* TOP HUD */
+  #hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 18px;
+    background: #2f3640;
+    border-bottom: 2px solid #192a56;
+  }
+  .stats-group { display: flex; gap: 22px; font-size: 17px; font-weight: bold; }
+  .controls-group { display: flex; gap: 8px; }
+  button.ctrl-btn {
+    padding: 7px 13px;
+    font-size: 13px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background: #00a8ff;
+    color: #fff;
+  }
+  button.ctrl-btn:hover { background: #0097e6; }
+  button.ctrl-btn:disabled { background: #57606f; cursor: not-allowed; }
+  #wave-btn { background: #44bd32; font-size: 14px; padding: 8px 16px; }
+  #wave-btn:hover { background: #4cd137; }
+  #menu-return-btn { background: #7f8fa6; }
+
+  /* CANVAS */
+  canvas { display: block; cursor: crosshair; }
+
+  /* INSPECTOR BAR */
+  #inspector {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 18px;
+    background: #232931;
+    border-top: 2px solid #192a56;
+    min-height: 46px;
+    font-size: 14px;
+  }
+  #upg-actions { display: none; gap: 8px; align-items: center; }
+
+  /* TOWER SHOP GRID (13 TOWERS) */
+  #shop-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    padding: 10px;
+    background: #2f3640;
+    border-top: 2px solid #192a56;
+  }
+  .tower-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 4px;
+    background: #353b48;
+    border: 2px solid #485460;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 11px;
+    transition: 0.1s;
+  }
+  .tower-btn:hover:not(:disabled) { border-color: #00a8ff; background: #3d4452; }
+  .tower-btn.selected { border-color: #fbc531; background: #4b4328; }
+  .tower-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .tower-btn .t-name { font-weight: bold; margin-bottom: 2px; }
+  .tower-btn .t-cost { color: #fbc531; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div id="wrapper">
+  <!-- START MENU -->
+  <div id="menu-screen">
+    <h1>🎈 BLOONS DEFENSE PRO</h1>
+    <p class="subtitle">13 Custom-Modeled Towers • Economy Banks • Multi-Tier Bloons</p>
+
+    <div class="menu-section">
+      <h3>1. Select Map</h3>
+      <div class="option-grid" id="map-options">
+        <div class="menu-card active" onclick="selectMenuOption('map', 'meadow', this)">
+          <strong>🌿 Monkey Meadow</strong>
+          <span>Long winding grass track with wide loops.</span>
+        </div>
+        <div class="menu-card" onclick="selectMenuOption('map', 'canyon', this)">
+          <strong>🏜️ Desert Canyon</strong>
+          <span>Sharp hairpin turns through rocky mesas.</span>
+        </div>
+        <div class="menu-card" onclick="selectMenuOption('map', 'tundra', this)">
+          <strong>❄️ Frozen River</strong>
+          <span>Fast straightaways across an icy valley.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="menu-section">
+      <h3>2. Select Difficulty</h3>
+      <div class="option-grid" id="diff-options">
+        <div class="menu-card active" onclick="selectMenuOption('diff', 'easy', this)">
+          <strong>🟢 Easy</strong>
+          <span>150 Lives • $350 Cash • 85% Tower Cost</span>
+        </div>
+        <div class="menu-card" onclick="selectMenuOption('diff', 'medium', this)">
+          <strong>🟡 Medium</strong>
+          <span>100 Lives • $250 Cash • Standard Prices</span>
+        </div>
+        <div class="menu-card" onclick="selectMenuOption('diff', 'hard', this)">
+          <strong>🔴 Hard</strong>
+          <span>50 Lives • $200 Cash • 115% Cost & Tougher Waves</span>
+        </div>
+      </div>
+    </div>
+
+    <button id="start-game-btn" onclick="launchGame()">▶ PLAY GAME</button>
+  </div>
+
+  <!-- TOP HUD -->
+  <div id="hud-top">
+    <div class="stats-group">
+      <div>❤️ <span id="lives">100</span></div>
+      <div>💰 $<span id="cash">250</span></div>
+      <div>🌊 Wave: <span id="wave">0</span></div>
+      <div id="diff-badge" style="color:#fbc531; font-size:14px; align-self:center;"></div>
+    </div>
+    <div class="controls-group">
+      <button class="ctrl-btn" id="wave-btn" onclick="startNextWave()">▶ Start Wave</button>
+      <button class="ctrl-btn" id="speed-btn" onclick="toggleSpeed()">⏩ 1x</button>
+      <button class="ctrl-btn" id="auto-btn" onclick="toggleAuto()">🔄 Auto: OFF</button>
+      <button class="ctrl-btn" id="menu-return-btn" onclick="returnToMenu()">🏠 Menu</button>
+    </div>
+  </div>
+
+  <!-- GAME CANVAS -->
+  <canvas id="gameCanvas" width="960" height="460"></canvas>
+
+  <!-- INSPECTOR / UPGRADE PANEL -->
+  <div id="inspector">
+    <div id="status-text">Select a tower below to place on the map.</div>
+    <div id="upg-actions">
+      <button class="ctrl-btn" id="upg-btn" onclick="upgradeSelected()">⬆️ Upgrade</button>
+      <button class="ctrl-btn" id="collect-btn" style="background:#fbc531; color:#1e272e; display:none;" onclick="collectBank()">🏦 Collect ($0)</button>
+      <button class="ctrl-btn" id="sell-btn" style="background:#e84118;" onclick="sellSelected()">💵 Sell</button>
+    </div>
+  </div>
+
+  <!-- 13 TOWERS SHOP -->
+  <div id="shop-grid"></div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// MENU SELECTIONS
+let chosenMap = 'meadow';
+let chosenDiff = 'medium';
+
+function selectMenuOption(category, value, el) {
+  if (category === 'map') {
+    chosenMap = value;
+    document.querySelectorAll('#map-options .menu-card').forEach(c => c.classList.remove('active'));
+  } else {
+    chosenDiff = value;
+    document.querySelectorAll('#diff-options .menu-card').forEach(c => c.classList.remove('active'));
+  }
+  el.classList.add('active');
+}
+
+// MAPS DATA
+const MAPS = {
+  meadow: {
+    bg: '#4cd137',
+    pathColor: '#dcdde1',
+    borderColor: '#7f8fa6',
+    decor: 'trees',
+    waypoints: [
+      {x: 0, y: 80}, {x: 240, y: 80}, {x: 240, y: 360},
+      {x: 520, y: 360}, {x: 520, y: 120}, {x: 780, y: 120},
+      {x: 780, y: 380}, {x: 960, y: 380}
+    ]
+  },
+  canyon: {
+    bg: '#e58e26',
+    pathColor: '#f6b93b',
+    borderColor: '#b71540',
+    decor: 'rocks',
+    waypoints: [
+      {x: 0, y: 230}, {x: 160, y: 230}, {x: 160, y: 70},
+      {x: 420, y: 70}, {x: 420, y: 390}, {x: 680, y: 390},
+      {x: 680, y: 150}, {x: 960, y: 150}
+    ]
+  },
+  tundra: {
+    bg: '#dff9fb',
+    pathColor: '#7ed6df',
+    borderColor: '#22a6b3',
+    decor: 'snow',
+    waypoints: [
+      {x: 80, y: 0}, {x: 80, y: 380}, {x: 340, y: 380},
+      {x: 340, y: 90}, {x: 620, y: 90}, {x: 620, y: 370},
+      {x: 880, y: 370}, {x: 880, y: 0}
+    ]
+  }
+};
+
+// DIFFICULTY SETTINGS
+const DIFFICULTIES = {
+  easy:   { label: 'EASY',   lives: 150, cash: 350, costMult: 0.85, hpMult: 0.9 },
+  medium: { label: 'MEDIUM', lives: 100, cash: 250, costMult: 1.00, hpMult: 1.0 },
+  hard:   { label: 'HARD',   lives: 50,  cash: 200, costMult: 1.15, hpMult: 1.25 }
+};
+
+// 13 UNIQUE TOWERS
+const TOWER_DEFS = {
+  dart:      { name: 'Dart Monkey',    baseCost: 100, range: 115, rate: 36, dmg: 1, lead: false, desc: 'Fast single-target darts.' },
+  tack:      { name: 'Tack Shooter',   baseCost: 160, range: 80,  rate: 55, dmg: 1, lead: false, desc: '8-way radial needle burst.' },
+  sniper:    { name: 'Sniper Monkey',  baseCost: 240, range: 999, rate: 85, dmg: 3, lead: true,  desc: 'Infinite range & pops Lead.' },
+  bomb:      { name: 'Bomb Shooter',   baseCost: 260, range: 120, rate: 72, dmg: 2, lead: true,  desc: 'Explosive area splash damage.' },
+  ice:       { name: 'Ice Tower',      baseCost: 200, range: 90,  rate: 65, dmg: 1, lead: false, desc: 'Freezes & slows nearby Bloons.' },
+  glue:      { name: 'Glue Gunner',    baseCost: 180, range: 115, rate: 50, dmg: 0, lead: false, desc: 'Coats Bloons in slowing glue.' },
+  boomerang: { name: 'Boomerang',      baseCost: 210, range: 125, rate: 48, dmg: 2, lead: false, desc: 'Curved glaives pierce multiple Bloons.' },
+  wizard:    { name: 'Wizard Monkey',  baseCost: 300, range: 130, rate: 42, dmg: 2, lead: true,  desc: 'Fires homing arcane magic bolts.' },
+  ninja:     { name: 'Ninja Monkey',   baseCost: 280, range: 125, rate: 26, dmg: 1, lead: false, desc: 'Rapid twin shurikens with seeking.' },
+  super:     { name: 'Super Monkey',   baseCost: 900, range: 155, rate: 9,  dmg: 1, lead: false, desc: 'Ultra-fast plasma stream.' },
+  bank:      { name: 'Monkey Bank',    baseCost: 450, range: 50,  rate: 0,  dmg: 0, lead: false, desc: 'Generates cash each wave + 15% interest!' },
+  tesla:     { name: 'Tesla Coil',     baseCost: 340, range: 115, rate: 55, dmg: 2, lead: true,  desc: 'Chain lightning jumps up to 4 Bloons.' },
+  mortar:    { name: 'Mortar Cannon',  baseCost: 380, range: 999, rate: 95, dmg: 4, lead: true,  desc: 'Shells the furthest Bloon on track.' }
+};
+
+// BLOON TIERS
+const BLOONS = [
+  null,
+  { name: 'Red',     color: '#e84118', speed: 1.3, r: 11, lead: false },
+  { name: 'Blue',    color: '#0097e6', speed: 1.7, r: 12, lead: false },
+  { name: 'Green',   color: '#44bd32', speed: 2.1, r: 13, lead: false },
+  { name: 'Yellow',  color: '#fbc531', speed: 2.7, r: 14, lead: false },
+  { name: 'Pink',    color: '#ff9ff3', speed: 3.3, r: 14, lead: false },
+  { name: 'Lead',    color: '#7f8fa6', speed: 1.1, r: 15, lead: true  },
+  { name: 'Ceramic', color: '#cd6133', speed: 2.2, r: 16, lead: false },
+  { name: 'MOAB',    color: '#273c75', speed: 0.7, r: 26, lead: false, moab: true }
+];
+
+// GAME STATE
+let lives = 100, cash = 250, wave = 0;
+let speedMult = 1, autoStart = false;
+let waveActive = false, gameOver = false;
+let selectedShopKey = null, selectedTower = null;
+let mousePos = { x: 0, y: 0 };
+
+let towers = [], bloons = [], projectiles = [], effects = [], decorItems = [];
+let spawnQueue = [], spawnTimer = 0;
+
+function getTowerCost(key) {
+  return Math.round((TOWER_DEFS[key].baseCost * DIFFICULTIES[chosenDiff].costMult) / 5) * 5;
+}
+
+function buildShop() {
+  const grid = document.getElementById('shop-grid');
+  grid.innerHTML = '';
+  Object.keys(TOWER_DEFS).forEach(key => {
+    const def = TOWER_DEFS[key];
+    const cost = getTowerCost(key);
+    const btn = document.createElement('button');
+    btn.className = 'tower-btn';
+    btn.id = 'shop-' + key;
+    btn.title = def.desc;
+    btn.onclick = () => selectShopTower(key);
+    btn.innerHTML = `<span class="t-name">${def.name}</span><span class="t-cost">$${cost}</span>`;
+    grid.appendChild(btn);
+  });
+}
+
+function generateDecor() {
+  decorItems = [];
+  const map = MAPS[chosenMap];
+  for (let i = 0; i < 28; i++) {
+    const x = 30 + Math.random() * (canvas.width - 60);
+    const y = 30 + Math.random() * (canvas.height - 60);
+    if (!isOnPath(x, y, 42)) {
+      decorItems.push({ x, y, size: 10 + Math.random() * 12, type: map.decor });
+    }
+  }
+}
+
+function launchGame() {
+  const diff = DIFFICULTIES[chosenDiff];
+  lives = diff.lives;
+  cash = diff.cash;
+  wave = 0;
+  speedMult = 1;
+  waveActive = false;
+  gameOver = false;
+  towers = [];
+  bloons = [];
+  projectiles = [];
+  effects = [];
+  spawnQueue = [];
+  selectedShopKey = null;
+  selectedTower = null;
+
+  document.getElementById('diff-badge').innerText = `${MAPS[chosenMap].decor.toUpperCase()} • ${diff.label}`;
+  document.getElementById('speed-btn').innerText = '⏩ 1x';
+  document.getElementById('menu-screen').style.display = 'none';
+  buildShop();
+  generateDecor();
+  updateUI();
+}
+
+function returnToMenu() {
+  document.getElementById('menu-screen').style.display = 'flex';
+}
+
+function toggleSpeed() {
+  speedMult = speedMult === 1 ? 2 : 1;
+  document.getElementById('speed-btn').innerText = `⏩ ${speedMult}x`;
+}
+
+function toggleAuto() {
+  autoStart = !autoStart;
+  document.getElementById('auto-btn').innerText = `🔄 Auto: ${autoStart ? 'ON' : 'OFF'}`;
+}
+
+function selectShopTower(key) {
+  if (gameOver) return;
+  selectedTower = null;
+  selectedShopKey = (selectedShopKey === key) ? null : key;
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById('lives').innerText = lives;
+  document.getElementById('cash').innerText = cash;
+  document.getElementById('wave').innerText = wave;
+  document.getElementById('wave-btn').disabled = waveActive || gameOver;
+
+  Object.keys(TOWER_DEFS).forEach(key => {
+    const btn = document.getElementById('shop-' + key);
+    if (!btn) return;
+    btn.classList.toggle('selected', selectedShopKey === key);
+    btn.disabled = cash < getTowerCost(key) || gameOver;
+  });
+
+  const statusText = document.getElementById('status-text');
+  const upgActions = document.getElementById('upg-actions');
+  const upgBtn = document.getElementById('upg-btn');
+  const collectBtn = document.getElementById('collect-btn');
+  const sellBtn = document.getElementById('sell-btn');
+
+  if (selectedTower) {
+    upgActions.style.display = 'flex';
+    const upgCost = Math.round(selectedTower.baseCost * 0.85 * selectedTower.level);
+    upgBtn.disabled = cash < upgCost || selectedTower.level >= 4;
+    upgBtn.innerText = selectedTower.level >= 4 ? '⭐ MAX LEVEL' : `⬆️ Upgrade ($${upgCost})`;
+    sellBtn.innerText = `💵 Sell ($${Math.floor(selectedTower.spent * 0.7)})`;
+
+    if (selectedTower.key === 'bank') {
+      collectBtn.style.display = 'inline-block';
+      collectBtn.disabled = selectedTower.bankCash <= 0;
+      collectBtn.innerText = `🏦 Collect ($${selectedTower.bankCash})`;
+      statusText.innerText = `Monkey Bank (Lv.${selectedTower.level}) • Balance: $${selectedTower.bankCash} / $${selectedTower.bankCap}`;
+    } else {
+      collectBtn.style.display = 'none';
+      statusText.innerText = `${selectedTower.name} (Lv.${selectedTower.level}) • Dmg: ${selectedTower.dmg} • Pops: ${selectedTower.pops}`;
+    }
+  } else {
+    upgActions.style.display = 'none';
+    if (selectedShopKey) {
+      const def = TOWER_DEFS[selectedShopKey];
+      statusText.innerText = `Placing ${def.name} ($${getTowerCost(selectedShopKey)}): ${def.desc}`;
+    } else {
+      statusText.innerText = 'Select a tower below to place, or click a placed tower to upgrade/collect.';
+    }
+  }
+}
+
+function upgradeSelected() {
+  if (!selectedTower || selectedTower.level >= 4) return;
+  const upgCost = Math.round(selectedTower.baseCost * 0.85 * selectedTower.level);
+  if (cash < upgCost) return;
+
+  cash -= upgCost;
+  selectedTower.spent += upgCost;
+  selectedTower.level++;
+
+  if (selectedTower.key === 'bank') {
+    selectedTower.bankCap += 600;
+    selectedTower.income += 75;
+  } else {
+    selectedTower.dmg += 1;
+    selectedTower.rate = Math.max(6, Math.floor(selectedTower.rate * 0.82));
+    if (selectedTower.range < 900) selectedTower.range += 18;
+    if (selectedTower.level >= 3) selectedTower.lead = true;
+  }
+  updateUI();
+}
+
+function collectBank() {
+  if (!selectedTower || selectedTower.key !== 'bank' || selectedTower.bankCash <= 0) return;
+  cash += selectedTower.bankCash;
+  selectedTower.bankCash = 0;
+  updateUI();
+}
+
+function sellSelected() {
+  if (!selectedTower) return;
+  if (selectedTower.key === 'bank') cash += selectedTower.bankCash;
+  cash += Math.floor(selectedTower.spent * 0.7);
+  towers = towers.filter(t => t !== selectedTower);
+  selectedTower = null;
+  updateUI();
+}
+
+// PLACEMENT HELPERS
+function distToSegment(p, v, w) {
+  const l2 = (v.x - w.x) ** 2 + (v.y - w.y) ** 2;
+  if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+  let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
+}
+
+function isOnPath(x, y, margin = 32) {
+  const pts = MAPS[chosenMap].waypoints;
+  for (let i = 0; i < pts.length - 1; i++) {
+    if (distToSegment({ x, y }, pts[i], pts[i + 1]) < margin) return true;
+  }
+  return false;
+}
+
+function isValidPlacement(x, y) {
+  if (x < 22 || x > canvas.width - 22 || y < 22 || y > canvas.height - 22) return false;
+  if (isOnPath(x, y, 32)) return false;
+  for (let t of towers) {
+    if (Math.hypot(t.x - x, t.y - y) < 34) return false;
+  }
+  return true;
+}
+
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  mousePos.x = e.clientX - rect.left;
+  mousePos.y = e.clientY - rect.top;
+});
+
+canvas.addEventListener('click', () => {
+  if (gameOver) return;
+  if (selectedShopKey) {
+    const cost = getTowerCost(selectedShopKey);
+    if (cash >= cost && isValidPlacement(mousePos.x, mousePos.y)) {
+      const def = TOWER_DEFS[selectedShopKey];
+      cash -= cost;
+      towers.push({
+        key: selectedShopKey,
+        x: mousePos.x,
+        y: mousePos.y,
+        angle: 0,
+        ...def,
+        cooldown: 0,
+        level: 1,
+        spent: cost,
+        pops: 0,
+        bankCash: 0,
+        bankCap: 800,
+        income: 100
+      });
+      selectedShopKey = null;
+      updateUI();
+    }
+  } else {
+    selectedTower = towers.find(t => Math.hypot(t.x - mousePos.x, t.y - mousePos.y) < 20) || null;
+    updateUI();
+  }
+});
+
+// WAVES
+function startNextWave() {
+  if (waveActive || gameOver) return;
+  wave++;
+  waveActive = true;
+  const totalBloons = Math.floor((10 + wave * 5) * DIFFICULTIES[chosenDiff].hpMult);
+  spawnQueue = [];
+
+  for (let i = 0; i < totalBloons; i++) {
+    let tier = 1;
+    if (wave >= 2 && i % 3 === 0) tier = 2;
+    if (wave >= 3 && i % 4 === 0) tier = 3;
+    if (wave >= 5 && i % 5 === 0) tier = 4;
+    if (wave >= 7 && i % 6 === 0) tier = 5;
+    if (wave >= 8 && i % 8 === 0) tier = 6; // Lead
+    if (wave >= 11 && i % 10 === 0) tier = 7; // Ceramic
+    spawnQueue.push(tier);
+  }
+  if (wave % 10 === 0) {
+    spawnQueue.push(8); // MOAB Boss every 10 waves
+  }
+  updateUI();
+}
+
+function endWave() {
+  waveActive = false;
+  cash += 60 + wave * 12;
+
+  // Bank Interest & Wave Payout
+  towers.forEach(t => {
+    if (t.key === 'bank') {
+      const interest = Math.floor(t.bankCash * 0.15);
+      t.bankCash = Math.min(t.bankCap, t.bankCash + t.income + interest);
+    }
+  });
+  updateUI();
+  if (autoStart && !gameOver) {
+    setTimeout(() => { if (!waveActive && !gameOver) startNextWave(); }, 600);
+  }
+}
+
+// UPDATE LOOP
+function update() {
+  if (gameOver || document.getElementById('menu-screen').style.display !== 'none') return;
+
+  // Spawn Bloons
+  if (waveActive) {
+    if (spawnQueue.length > 0) {
+      spawnTimer--;
+      if (spawnTimer <= 0) {
+        const tier = spawnQueue.shift();
+        const start = MAPS[chosenMap].waypoints;
+        bloons.push({
+          x: start.x, y: start.y, wp: 1,
+          tier: tier,
+          hp: tier === 8 ? 45 : (tier === 7 ? 6 : 1),
+          dist: 0,
+          slowTimer: 0,
+          glued: false
+        });
+        spawnTimer = Math.max(10, 32 - wave);
+      }
+    } else if (bloons.length === 0) {
+      endWave();
+    }
+  }
+
+  // Move Bloons
+  const pts = MAPS[chosenMap].waypoints;
+  for (let i = bloons.length - 1; i >= 0; i--) {
+    const b = bloons[i];
+    const spec = BLOONS[b.tier];
+    let spd = spec.speed;
+    if (b.slowTimer > 0) { spd *= 0.35; b.slowTimer--; }
+    else if (b.glued) { spd *= 0.55; }
+
+    const target = pts[b.wp];
+    const dx = target.x - b.x, dy = target.y - b.y;
+    const d = Math.hypot(dx, dy);
+
+    if (d < spd) {
+      b.x = target.x; b.y = target.y; b.wp++;
+      if (b.wp >= pts.length) {
+        lives -= (b.tier === 8 ? 25 : b.tier);
+        bloons.splice(i, 1);
+        if (lives <= 0) {
+          lives = 0;
+          gameOver = true;
+        }
+        updateUI();
+      }
+    } else {
+      b.x += (dx / d) * spd;
+      b.y += (dy / d) * spd;
+      b.dist += spd;
+    }
+  }
+
+  // Towers Attack
+  towers.forEach(t => {
+    if (t.key === 'bank') return;
+    if (t.cooldown > 0) { t.cooldown--; return; }
+
+    // Find target (Furthest along track)
+    let target = null, bestDist = -1;
+    for (let b of bloons) {
+      if (Math.hypot(b.x - t.x, b.y - t.y) <= t.range && b.dist > bestDist) {
+        bestDist = b.dist;
+        target = b;
+      }
+    }
+    if (!target) return;
+
+    t.angle = Math.atan2(target.y - t.y, target.x - t.x);
+    t.cooldown = t.rate;
+
+    if (t.key === 'tack') {
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+        projectiles.push({ x: t.x, y: t.y, vx: Math.cos(a)*7, vy: Math.sin(a)*7, dmg: t.dmg, life: 12, owner: t, style: 'tack' });
+      }
+    } else if (t.key === 'sniper') {
+      damageBloon(target, t.dmg, t);
+      effects.push({ type: 'line', x1: t.x, y1: t.y, x2: target.x, y2: target.y, color: '#fbc531', life: 6 });
+    } else if (t.key === 'ice') {
+      effects.push({ type: 'ring', x: t.x, y: t.y, r: t.range, color: 'rgba(126, 214, 223, 0.5)', life: 12 });
+      bloons.forEach(b => {
+        if (Math.hypot(b.x - t.x, b.y - t.y) <= t.range) {
+          b.slowTimer = 75;
+          if (!BLOONS[b.tier].lead) damageBloon(b, t.dmg, t);
+        }
+      });
+    } else if (t.key === 'tesla') {
+      let chain = [target];
+      let curr = target;
+      for (let c = 0; c < 3; c++) {
+        let next = bloons.find(b => !chain.includes(b) && Math.hypot(b.x - curr.x, b.y - curr.y) < 95);
+        if (next) { chain.push(next); curr = next; }
+      }
+      for (let i = 0; i < chain.length; i++) {
+        const p1 = i === 0 ? t : chain[i - 1];
+        const p2 = chain[i];
+        effects.push({ type: 'line', x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, color: '#00a8ff', life: 8 });
+        damageBloon(p2, t.dmg, t);
+      }
+    } else if (t.key === 'mortar') {
+      effects.push({ type: 'boom', x: target.x, y: target.y, r: 55, life: 12 });
+      bloons.forEach(b => {
+        if (Math.hypot(b.x - target.x, b.y - target.y) <= 55) damageBloon(b, t.dmg, t);
+      });
+    } else {
+      const spd = t.key === 'super' ? 12 : 8;
+      projectiles.push({
+        x: t.x, y: t.y,
+        vx: Math.cos(t.angle) * spd,
+        vy: Math.sin(t.angle) * spd,
+        dmg: t.dmg,
+        life: 45,
+        pierce: (t.key === 'boomerang' || t.key === 'ninja') ? 3 : 1,
+        hitList: [],
+        homing: (t.key === 'wizard' || t.key === 'ninja'),
+        splash: (t.key === 'bomb'),
+        glue: (t.key === 'glue'),
+        owner: t,
+        style: t.key
+      });
+    }
+  });
+
+  // Update Projectiles
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    const p = projectiles[i];
+    p.life--;
+    if (p.life <= 0) { projectiles.splice(i, 1); continue; }
+
+    if (p.homing && bloons.length > 0) {
+      const nearest = bloons.find(b => !p.hitList.includes(b) && Math.hypot(b.x - p.x, b.y - p.y) < 140);
+      if (nearest) {
+        const ang = Math.atan2(nearest.y - p.y, nearest.x - p.x);
+        p.vx = Math.cos(ang) * 8;
+        p.vy = Math.sin(ang) * 8;
+      }
+    }
+
+    p.x += p.vx;
+    p.y += p.vy;
+
+    for (let j = bloons.length - 1; j >= 0; j--) {
+      const b = bloons[j];
+      if (p.hitList.includes(b)) continue;
+      if (Math.hypot(p.x - b.x, p.y - b.y) < BLOONS[b.tier].r + 5) {
+        p.hitList.push(b);
+        if (p.glue) {
+          b.glued = true;
+        } else if (p.splash) {
+          effects.push({ type: 'boom', x: p.x, y: p.y, r: 50, life: 10 });
+          bloons.forEach(b2 => {
+            if (Math.hypot(p.x - b2.x, p.y - b2.y) <= 50) damageBloon(b2, p.dmg, p.owner);
+          });
+        } else {
+          damageBloon(b, p.dmg, p.owner);
+        }
+        p.pierce--;
+        if (p.pierce <= 0) {
+          projectiles.splice(i, 1);
+          break;
+        }
+      }
+    }
+  }
+
+  // Update Visual Effects
+  for (let i = effects.length - 1; i >= 0; i--) {
+    effects[i].life--;
+    if (effects[i].life <= 0) effects.splice(i, 1);
+  }
+}
+
+function damageBloon(b, dmg, tower) {
+  const idx = bloons.indexOf(b);
+  if (idx === -1) return;
+  const spec = BLOONS[b.tier];
+  if (spec.lead && !tower.lead) return; // Immune to sharp attacks
+
+  if (b.tier === 8 || b.tier === 7) {
+    b.hp -= dmg;
+    tower.pops += dmg;
+    if (b.hp <= 0) {
+      cash += (b.tier === 8 ? 50 : 10);
+      b.tier = b.tier === 8 ? 7 : 5;
+      b.hp = b.tier === 7 ? 6 : 1;
+      updateUI();
+    }
+  } else {
+    const popped = Math.min(b.tier, dmg);
+    cash += popped * 2;
+    tower.pops += popped;
+    b.tier -= dmg;
+    if (b.tier <= 0) bloons.splice(idx, 1);
+    updateUI();
+  }
+}
+
+// CUSTOM VECTOR MODELS FOR ALL 13 TOWERS
+function drawTowerModel(t) {
+  ctx.save();
+  ctx.translate(t.x, t.y);
+
+  // Level Ring
+  if (t.level > 1) {
+    ctx.strokeStyle = '#fbc531';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 19, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Bank doesn't rotate
+  if (t.key !== 'bank' && t.key !== 'tack' && t.key !== 'ice' && t.key !== 'tesla') {
+    ctx.rotate(t.angle);
+  }
+
+  switch (t.key) {
+    case 'dart':
+      ctx.fillStyle = '#8d5524';
+      ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#e0ac69';
+      ctx.beginPath(); ctx.arc(4, 0, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(10, -2, 10, 4); // Dart
+      break;
+
+    case 'tack':
+      ctx.fillStyle = '#ff6b81';
+      ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#2f3542'; ctx.lineWidth = 3; ctx.stroke();
+      ctx.fillStyle = '#2f3542';
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+        ctx.fillRect(Math.cos(a)*10 - 2, Math.sin(a)*10 - 2, 4, 4);
+      }
+      break;
+
+    case 'sniper':
+      ctx.fillStyle = '#2f3640';
+      ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#44bd32'; // Helmet
+      ctx.beginPath(); ctx.arc(-2, 0, 10, Math.PI*0.5, Math.PI*1.5); ctx.fill();
+      ctx.fillStyle = '#1e272e';
+      ctx.fillRect(4, -2, 20, 4); // Long rifle
+      break;
+
+    case 'bomb':
+      ctx.fillStyle = '#2f3640';
+      ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#192a56';
+      ctx.fillRect(0, -6, 18, 12); // Heavy barrel
+      break;
+
+    case 'ice':
+      ctx.fillStyle = '#7ed6df';
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = (Math.PI / 3) * i;
+        ctx.lineTo(Math.cos(a)*16, Math.sin(a)*16);
+      }
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI * 2); ctx.fill();
+      break;
+
+    case 'glue':
+      ctx.fillStyle = '#fbc531';
+      ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#4cd137';
+      ctx.fillRect(-10, -8, 10, 16); // Glue tank
+      ctx.fillRect(8, -3, 10, 6);   // Nozzle
+      break;
+
+    case 'boomerang':
+      ctx.fillStyle = '#e67e22';
+      ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(10, 0, 8, -1.2, 1.2); ctx.stroke();
+      break;
+
+    case 'wizard':
+      ctx.fillStyle = '#8c7ae6';
+      ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fbc531'; // Stars/Wand
+      ctx.fillRect(8, -2, 12, 3);
+      ctx.beginPath(); ctx.arc(20, 0, 4, 0, Math.PI * 2); ctx.fill();
+      break;
+
+    case 'ninja':
+      ctx.fillStyle = '#eb2f06';
+      ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(4, -5, 6, 10); // Eye slit
+      break;
+
+    case 'super':
+      ctx.fillStyle = '#00a8ff';
+      ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#e84118'; // Cape
+      ctx.fillRect(-16, -10, 8, 20);
+      ctx.fillStyle = '#fbc531';
+      ctx.beginPath(); ctx.moveTo(6,0); ctx.lineTo(-2,-6); ctx.lineTo(-2,6); ctx.fill();
+      break;
+
+    case 'bank':
+      ctx.fillStyle = '#fbc531';
+      ctx.fillRect(-15, -14, 30, 28);
+      ctx.fillStyle = '#44bd32';
+      ctx.fillRect(-17, -18, 34, 6); // Roof
+      ctx.fillStyle = '#1e272e';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('$', 0, 6);
+      break;
+
+    case 'tesla':
+      ctx.fillStyle = '#57606f';
+      ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#00a8ff'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
+      break;
+
+    case 'mortar':
+      ctx.fillStyle = '#353b48';
+      ctx.fillRect(-14, -14, 28, 28);
+      ctx.fillStyle = '#718093';
+      ctx.beginPath(); ctx.arc(4, 0, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#1e272e';
+      ctx.beginPath(); ctx.arc(6, 0, 6, 0, Math.PI * 2); ctx.fill();
+      break;
+  }
+
+  ctx.restore();
+}
+
+// RENDER LOOP
+function draw() {
+  const map = MAPS[chosenMap];
+  ctx.fillStyle = map.bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Decor
+  decorItems.forEach(d => {
+    ctx.fillStyle = d.type === 'trees' ? '#2b8a1e' : (d.type === 'rocks' ? '#b33939' : '#c7ecee');
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Track Border & Road
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = map.borderColor;
+  ctx.lineWidth = 48;
+  ctx.beginPath();
+  ctx.moveTo(map.waypoints.x, map.waypoints.y);
+  map.waypoints.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.stroke();
+
+  ctx.strokeStyle = map.pathColor;
+  ctx.lineWidth = 38;
+  ctx.stroke();
+
+  // Range Preview
+  if (selectedShopKey) {
+    const def = TOWER_DEFS[selectedShopKey];
+    const valid = isValidPlacement(mousePos.x, mousePos.y);
+    ctx.fillStyle = valid ? 'rgba(255,255,255,0.25)' : 'rgba(232,65,24,0.35)';
+    ctx.beginPath();
+    ctx.arc(mousePos.x, mousePos.y, def.range >= 900 ? 35 : def.range, 0, Math.PI * 2);
+    ctx.fill();
+    drawTowerModel({ key: selectedShopKey, x: mousePos.x, y: mousePos.y, angle: 0, level: 1 });
+  }
+
+  if (selectedTower) {
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.beginPath();
+    ctx.arc(selectedTower.x, selectedTower.y, selectedTower.range >= 900 ? 35 : selectedTower.range, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#fbc531';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Towers
+  towers.forEach(drawTowerModel);
+
+  // Bloons
+  bloons.forEach(b => {
+    const spec = BLOONS[b.tier];
+    ctx.fillStyle = spec.color;
+    ctx.beginPath();
+    if (spec.moab) {
+      ctx.ellipse(b.x, b.y, 28, 16, 0, 0, Math.PI * 2);
+    } else {
+      ctx.ellipse(b.x, b.y, spec.r * 0.85, spec.r, 0, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    ctx.strokeStyle = b.slowTimer > 0 ? '#7ed6df' : (b.glued ? '#4cd137' : 'rgba(0,0,0,0.4)');
+    ctx.lineWidth = (b.slowTimer > 0 || b.glued) ? 3 : 1.5;
+    ctx.stroke();
+  });
+
+  // Projectiles
+  projectiles.forEach(p => {
+    ctx.fillStyle = p.style === 'glue' ? '#4cd137' : (p.style === 'wizard' ? '#8c7ae6' : (p.style === 'super' ? '#00a8ff' : '#fff'));
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.splash ? 6 : 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Effects
+  effects.forEach(ef => {
+    if (ef.type === 'line') {
+      ctx.strokeStyle = ef.color;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(ef.x1, ef.y1); ctx.lineTo(ef.x2, ef.y2); ctx.stroke();
+    } else if (ef.type === 'ring') {
+      ctx.fillStyle = ef.color;
+      ctx.beginPath(); ctx.arc(ef.x, ef.y, ef.r, 0, Math.PI * 2); ctx.fill();
+    } else if (ef.type === 'boom') {
+      ctx.fillStyle = 'rgba(232, 65, 24, 0.5)';
+      ctx.beginPath(); ctx.arc(ef.x, ef.y, ef.r, 0, Math.PI * 2); ctx.fill();
+    }
+  });
+
+  if (gameOver) {
+    ctx.fillStyle = 'rgba(0,0,0,0.78)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#e84118';
+    ctx.font = 'bold 48px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 10);
+    ctx.fillStyle = '#fff';
+    ctx.font = '20px sans-serif';
+    ctx.fillText(`You survived ${wave} waves! Click Menu to play again.`, canvas.width / 2, canvas.height / 2 + 30);
+  }
+}
+
+function loop() {
+  for (let i = 0; i < speedMult; i++) update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
